@@ -1,5 +1,14 @@
+#include <stdlib.h>
 #include <termios.h>
 #include <unistd.h>
+
+// This variable stored the termios state at program init.
+struct termios original_termios;
+
+// Resets the terminal state.
+void disableRawMode(){
+  tcsetattr(STDIN_FILENO, TCSAFLUSH, &original_termios);
+}
 
 /*
   By default terminal runs in cooked mode, where the input is not received by the
@@ -20,17 +29,28 @@ void enableRawMode()
 
   // Disable the ECHO feature. This means whatever you type will not be displayed
   // on the terminal.
-  // TODO Disabling ECHO like this has a side effeect. It disables ECHo for the main terminal
-  //      that has to be reset again.
   raw.c_lflag &= ~(ECHO);
 
   // Write back the edited flags.
   tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
 }
 
+void init(){
+  // Save the original value in a global variable.
+  tcgetattr(STDIN_FILENO, &original_termios);
+
+  // Disable the raw mode when exiting the program.
+  atexit(disableRawMode);
+
+  // Enable the raw mode.
+  enableRawMode();
+}
+/*
+  Entry point of the program.
+*/
 int main()
 {
-  enableRawMode();
+  init();
   char c;
 
   /*
