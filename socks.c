@@ -84,12 +84,12 @@ int main()
   {
     // Control character are non-printable.
     if (iscntrl(c)) {
-      printf("%d\n", c );
+      printf("%d\r\n", c );
     }
     // Non-control character are printable.
     // This is to also check what the ASCII equivalent of characters.
     else {
-      printf("%d ('%c') \n", c, c);
+      printf("%d ('%c') \r\n", c, c);
     }
   }
 
