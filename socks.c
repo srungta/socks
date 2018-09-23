@@ -14,7 +14,7 @@ void disableRawMode(){
 
 /*
   By default terminal runs in cooked mode, where the input is not received by the
-  program till the user presses Enter key. Howvere this is not helpful while writing
+  program till the user presses Enter key. However this is not helpful while writing
   a text editor. In raw mode, we can capture the input behavior as we want.
 
   The terminal behavior is controlled through many flags and these flags can be
@@ -26,7 +26,7 @@ void enableRawMode()
   // Variable to read the current flag status.
   struct termios raw;
 
-  // Get the current flag status detrermining terminal behavior.
+  // Get the current flag status determining terminal behavior.
   tcgetattr(STDIN_FILENO, &raw);
 
   /* Disable the following input flags:
@@ -39,7 +39,7 @@ void enableRawMode()
       - ICANON [input]: Enables the canonical mode, where input is processed byte wise instead of line wise.
       - ISIG [input]: Disable the interrupt signals like Ctrl + C[terminate] and Ctrl + Z[suspend]
       - IEXTEN: Disable Ctrl + V which lets you type another character and send it as is to terminal
-                (for example, you can type Ctrl + V and then Ctrl + C , it does not interrupot the program, rather sends it as a character.)
+                (for example, you can type Ctrl + V and then Ctrl + C , it does not interrupt the program, rather sends it as a character.)
   */
   raw.c_lflag &= ~(ECHO | ICANON | ISIG | IEXTEN);
 
@@ -70,7 +70,7 @@ int main()
     our case is the console. It returns the number of characters entered and returns
     0 when EOF is reached. Here we are checking till the point where either the alphabet
     'q' is reached or the user explicitly exits the program.
-    Any text enetered after the letter 'q' is discarded by this program and passed on
+    Any text entered after the letter 'q' is discarded by this program and passed on
     to the terminal.
   */
   while (read(STDIN_FILENO, &c, 1) == 1 && c != 'q')
