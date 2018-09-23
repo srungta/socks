@@ -1,3 +1,4 @@
+/*** includes ***/
 #include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
@@ -5,9 +6,12 @@
 #include <termios.h>
 #include <unistd.h>
 
+/*** data ***/
 // This variable stored the termios state at program init.
 struct termios original_termios;
 
+
+/*** terminal ***/
 // Method to handle errors during program execution.
 void die(const char *s){
   perror(s);
@@ -84,6 +88,8 @@ void enableRawMode()
   }
 }
 
+
+/*** init ***/
 /*
   Setup up the flags for the editor to work.
 */
