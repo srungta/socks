@@ -60,6 +60,13 @@ void enableRawMode()
   */
   raw.c_lflag &= ~(ECHO | ICANON | ISIG | IEXTEN);
 
+  // Sets the minimum number of bytes of input needed before read() returns.
+  raw.c_cc[VMIN] = 1;
+
+  // Sets the maximum amount of time to wait before read() returns. Unit : 1/10 sec.
+  // This does not seem to work in Bash on Windows.
+  raw.c_cc[VTIME] = 1;
+
   // Write back the edited flags.
   tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
 }
@@ -80,7 +87,6 @@ void init(){
 int main()
 {
   init();
-  char c;
 
   /*
     read() reads the user input from the STDIN_FILENO standard input, which in
@@ -89,9 +95,14 @@ int main()
     'q' is reached or the user explicitly exits the program.
     Any text entered after the letter 'q' is discarded by this program and passed on
     to the terminal.
+    With VMIN and VTIME setup, the read loop can be written as its own infinite loop.
   */
-  while (read(STDIN_FILENO, &c, 1) == 1 && c != 'q')
+  while (1)
   {
+    // Initialize with an empty chaacter.
+    char c = '\0';
+    // Read into the character.
+    read(STDIN_FILENO, &c, 1);
     // Control character are non-printable.
     if (iscntrl(c)) {
       printf("%d\r\n", c );
@@ -101,6 +112,7 @@ int main()
     else {
       printf("%d ('%c') \r\n", c, c);
     }
+    if(c == 'q') break;
   }
 
   return 0;
