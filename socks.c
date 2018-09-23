@@ -29,12 +29,19 @@ void enableRawMode()
   // Get the current flag status detrermining terminal behavior.
   tcgetattr(STDIN_FILENO, &raw);
 
-  /* Disable the following flags:
-      - ECHO : whatever you type will not be displayed on the terminal.
-      - ICANON : Enables the canonical mode, where input is processed byte wise instead of line wise.
-      - ISIG : Disable the interrupt signals like Ctrl + C[terminate] and Ctrl + Z[suspend]
+  /* Disable the following input flags:
+      - IXON : Disables Ctrl + S and Ctrl + Q, which stop and resume data transmission from terminal.
   */
-  raw.c_lflag &= ~(ECHO | ICANON | ISIG);
+  raw.c_iflag &= ~(IXON);
+
+  /* Disable the following flags:
+      - ECHO [input]: whatever you type will not be displayed on the terminal.
+      - ICANON [input]: Enables the canonical mode, where input is processed byte wise instead of line wise.
+      - ISIG [input]: Disable the interrupt signals like Ctrl + C[terminate] and Ctrl + Z[suspend]
+      - IEXTEN: Disable Ctrl + V which lets you type another character and send it as is to terminal
+                (for example, you can type Ctrl + V and then Ctrl + C , it does not interrupot the program, rather sends it as a character.)
+  */
+  raw.c_lflag &= ~(ECHO | ICANON | ISIG | IEXTEN);
 
   // Write back the edited flags.
   tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
