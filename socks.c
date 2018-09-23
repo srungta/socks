@@ -1,3 +1,5 @@
+#include <ctype.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <termios.h>
 #include <unistd.h>
@@ -27,9 +29,11 @@ void enableRawMode()
   // Get the current flag status detrermining terminal behavior.
   tcgetattr(STDIN_FILENO, &raw);
 
-  // Disable the ECHO feature. This means whatever you type will not be displayed
-  // on the terminal.
-  raw.c_lflag &= ~(ECHO);
+  /* Disable the following flags:
+      - ECHO : whatever you type will not be displayed on the terminal.
+      - ICANON : Enables the canonical mode, where input is processed byte wise instead of line wise.
+  */
+  raw.c_lflag &= ~(ECHO | ICANON);
 
   // Write back the edited flags.
   tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
@@ -63,6 +67,15 @@ int main()
   */
   while (read(STDIN_FILENO, &c, 1) == 1 && c != 'q')
   {
+    // Control character are non-printable.
+    if (iscntrl(c)) {
+      printf("%d\n", c );
+    }
+    // Non-control character are printable.
+    // This is to also check what the ASCII equivalent of characters.
+    else {
+      printf("%d ('%c') \n", c, c);
+    }
   }
 
   return 0;
