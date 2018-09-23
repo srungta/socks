@@ -36,6 +36,11 @@ void enableRawMode()
   */
   raw.c_iflag &= ~(ICRNL | IXON);
 
+  /* Disable the following output flags:
+      - OPOST : Disables output post processing like changing \n to \r\n.
+  */
+  raw.c_oflag &= ~(OPOST);
+
   /* Disable the following flags:
       - ECHO [input]: whatever you type will not be displayed on the terminal.
       - ICANON [input]: Enables the canonical mode, where input is processed byte wise instead of line wise.
