@@ -1,15 +1,28 @@
+/*** includes ***/
 #include <ctype.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <termios.h>
 #include <unistd.h>
 
+/*** data ***/
 // This variable stored the termios state at program init.
 struct termios original_termios;
 
+
+/*** terminal ***/
+// Method to handle errors during program execution.
+void die(const char *s){
+  perror(s);
+  exit(1);
+}
+
 // Resets the terminal state.
 void disableRawMode(){
-  tcsetattr(STDIN_FILENO, TCSAFLUSH, &original_termios);
+  if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &original_termios) == -1) {
+    die("disableRawMode - tcsetattr");
+  }
 }
 
 /*
@@ -27,7 +40,9 @@ void enableRawMode()
   struct termios raw;
 
   // Get the current flag status determining terminal behavior.
-  tcgetattr(STDIN_FILENO, &raw);
+  if(tcgetattr(STDIN_FILENO, &raw) == -1){
+      die("enableRawMode - tcgetattr");
+  }
 
   /* Disable the parent flag using masks:
       - CS8 : CS8 is not a flag, it is a bit mask with multiple bits,
@@ -60,10 +75,24 @@ void enableRawMode()
   */
   raw.c_lflag &= ~(ECHO | ICANON | ISIG | IEXTEN);
 
+  // Sets the minimum number of bytes of input needed before read() returns.
+  raw.c_cc[VMIN] = 1;
+
+  // Sets the maximum amount of time to wait before read() returns. Unit : 1/10 sec.
+  // This does not seem to work in Bash on Windows.
+  raw.c_cc[VTIME] = 1;
+
   // Write back the edited flags.
-  tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
+  if(tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw) == -1){
+      die("enableRawMode - tcsetattr");
+  }
 }
 
+
+/*** init ***/
+/*
+  Setup up the flags for the editor to work.
+*/
 void init(){
   // Save the original value in a global variable.
   tcgetattr(STDIN_FILENO, &original_termios);
@@ -80,7 +109,6 @@ void init(){
 int main()
 {
   init();
-  char c;
 
   /*
     read() reads the user input from the STDIN_FILENO standard input, which in
@@ -89,9 +117,17 @@ int main()
     'q' is reached or the user explicitly exits the program.
     Any text entered after the letter 'q' is discarded by this program and passed on
     to the terminal.
+    With VMIN and VTIME setup, the read loop can be written as its own infinite loop.
   */
-  while (read(STDIN_FILENO, &c, 1) == 1 && c != 'q')
+  while (1)
   {
+    // Initialize with an empty chaacter.
+    char c = '\0';
+    // Read into the character.
+    if(read(STDIN_FILENO, &c, 1) == -1 && errno != EAGAIN)
+    {
+      die("main - read()");
+    }
     // Control character are non-printable.
     if (iscntrl(c)) {
       printf("%d\r\n", c );
@@ -101,6 +137,7 @@ int main()
     else {
       printf("%d ('%c') \r\n", c, c);
     }
+    if(c == 'q') break;
   }
 
   return 0;
