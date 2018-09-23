@@ -32,8 +32,9 @@ void enableRawMode()
   /* Disable the following flags:
       - ECHO : whatever you type will not be displayed on the terminal.
       - ICANON : Enables the canonical mode, where input is processed byte wise instead of line wise.
+      - ISIG : Disable the interrupt signals like Ctrl + C[terminate] and Ctrl + Z[suspend]
   */
-  raw.c_lflag &= ~(ECHO | ICANON);
+  raw.c_lflag &= ~(ECHO | ICANON | ISIG);
 
   // Write back the edited flags.
   tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
