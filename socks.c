@@ -29,12 +29,22 @@ void enableRawMode()
   // Get the current flag status determining terminal behavior.
   tcgetattr(STDIN_FILENO, &raw);
 
+  /* Disable the parent flag using masks:
+      - CS8 : CS8 is not a flag, it is a bit mask with multiple bits,
+              which we set using the bitwise-OR (|) operator unlike all the flags we are turning off.
+              It sets the character size (CS) to 8 bits per byte.
+  */
+  raw.c_cflag |= (CS8);
+
   /* Disable the following input flags:
-      - IXON : Disables Ctrl + S and Ctrl + Q, which stop and resume data transmission from terminal.
+      - BRKINT : When enabled, a break condition will cause a SIGINT signal to be sent to the program, like pressing Ctrl-C.
       - ICRNL : Ctrl + M is printed as newline becasue the terminal facilitates conversion of carriage return to new lines.
                 This also change Enter from 10[new line] to 13[carriage return].
+      - INPCK : Enables parity checking, which doesn’t seem to apply to modern terminal emulators.
+      - ISTRIP : Causes the 8th bit of each input byte to be stripped, meaning it will set it to 0. This is probably already turned off.
+      - IXON : Disables Ctrl + S and Ctrl + Q, which stop and resume data transmission from terminal.
   */
-  raw.c_iflag &= ~(ICRNL | IXON);
+  raw.c_iflag &= ~(BRKINT | ICRNL | INPCK | ISTRIP | IXON);
 
   /* Disable the following output flags:
       - OPOST : Disables output post processing like changing \n to \r\n.
