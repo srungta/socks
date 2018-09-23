@@ -1,4 +1,5 @@
 #include <ctype.h>
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <termios.h>
@@ -7,9 +8,17 @@
 // This variable stored the termios state at program init.
 struct termios original_termios;
 
+// Method to handle errors during program execution.
+void die(const char *s){
+  perror(s);
+  exit(1);
+}
+
 // Resets the terminal state.
 void disableRawMode(){
-  tcsetattr(STDIN_FILENO, TCSAFLUSH, &original_termios);
+  if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &original_termios) == -1) {
+    die("disableRawMode - tcsetattr");
+  }
 }
 
 /*
@@ -27,7 +36,9 @@ void enableRawMode()
   struct termios raw;
 
   // Get the current flag status determining terminal behavior.
-  tcgetattr(STDIN_FILENO, &raw);
+  if(tcgetattr(STDIN_FILENO, &raw) == -1){
+      die("enableRawMode - tcgetattr");
+  }
 
   /* Disable the parent flag using masks:
       - CS8 : CS8 is not a flag, it is a bit mask with multiple bits,
@@ -68,9 +79,14 @@ void enableRawMode()
   raw.c_cc[VTIME] = 1;
 
   // Write back the edited flags.
-  tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw);
+  if(tcsetattr(STDIN_FILENO, TCSAFLUSH, &raw) == -1){
+      die("enableRawMode - tcsetattr");
+  }
 }
 
+/*
+  Setup up the flags for the editor to work.
+*/
 void init(){
   // Save the original value in a global variable.
   tcgetattr(STDIN_FILENO, &original_termios);
@@ -102,7 +118,10 @@ int main()
     // Initialize with an empty chaacter.
     char c = '\0';
     // Read into the character.
-    read(STDIN_FILENO, &c, 1);
+    if(read(STDIN_FILENO, &c, 1) == -1 && errno != EAGAIN)
+    {
+      die("main - read()");
+    }
     // Control character are non-printable.
     if (iscntrl(c)) {
       printf("%d\r\n", c );
