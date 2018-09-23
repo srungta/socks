@@ -31,8 +31,10 @@ void enableRawMode()
 
   /* Disable the following input flags:
       - IXON : Disables Ctrl + S and Ctrl + Q, which stop and resume data transmission from terminal.
+      - ICRNL : Ctrl + M is printed as newline becasue the terminal facilitates conversion of carriage return to new lines.
+                This also change Enter from 10[new line] to 13[carriage return].
   */
-  raw.c_iflag &= ~(IXON);
+  raw.c_iflag &= ~(ICRNL | IXON);
 
   /* Disable the following flags:
       - ECHO [input]: whatever you type will not be displayed on the terminal.
