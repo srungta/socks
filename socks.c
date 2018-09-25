@@ -17,8 +17,8 @@ when pressed before a alphabet. It clears out the first three bits and returns t
 // This variable stored the termios state at program init.
 struct termios original_termios;
 
-
 /*** terminal ***/
+
 // Method to handle errors during program execution.
 void die(const char *s){
   perror(s);
@@ -95,6 +95,43 @@ void enableRawMode()
   }
 }
 
+/*
+Reads one character at a time from the terminal and returns it to the calling method.
+TODO : Expand to handle escape sequences.
+*/
+char editorReadKey(){
+  // Number of characters read.
+  int nread;
+  // Initialize with an empty chaacter.
+  char c = '\0';
+  /*
+    read() reads the user input from the STDIN_FILENO standard input, which in
+    our case is the console. It returns the number of characters entered and returns
+    0 when EOF is reached. Here we are checking till the point a character is entered.
+  */
+  while((nread = read(STDIN_FILENO, &c, 1)) != 1)
+  {
+    if (nread == -1 && errno != EAGAIN) {
+      die("editorReadKey - read()");
+    }
+  }
+  return c;
+}
+
+/*** input ***/
+
+/*
+Reads the key from the terminal and exits the program if the key is Ctrl Q.
+TODO : Handle other editor related key commands.
+*/
+void editorProcessKey(){
+  char c = editorReadKey();
+  switch (c){
+    case CTRL_KEY('q'):
+      exit(0);
+      break;
+  }
+}
 
 /*** init ***/
 /*
@@ -116,35 +153,9 @@ void init(){
 int main()
 {
   init();
-
-  /*
-    read() reads the user input from the STDIN_FILENO standard input, which in
-    our case is the console. It returns the number of characters entered and returns
-    0 when EOF is reached. Here we are checking till the point where either the alphabet
-    'q' is reached or the user explicitly exits the program.
-    Any text entered after the letter 'q' is discarded by this program and passed on
-    to the terminal.
-    With VMIN and VTIME setup, the read loop can be written as its own infinite loop.
-  */
   while (1)
   {
-    // Initialize with an empty chaacter.
-    char c = '\0';
-    // Read into the character.
-    if(read(STDIN_FILENO, &c, 1) == -1 && errno != EAGAIN)
-    {
-      die("main - read()");
-    }
-    // Control character are non-printable.
-    if (iscntrl(c)) {
-      printf("%d\r\n", c );
-    }
-    // Non-control character are printable.
-    // This is to also check what the ASCII equivalent of characters.
-    else {
-      printf("%d ('%c') \r\n", c, c);
-    }
-    if(c == CTRL_KEY('q')) break;
+    editorProcessKey();
   }
 
   return 0;
