@@ -21,6 +21,7 @@ struct termios original_termios;
 
 // Method to handle errors during program execution.
 void die(const char *s){
+  editorRefreshScreen();
   perror(s);
   exit(1);
 }
@@ -129,10 +130,14 @@ Method clears out the area in the terminal to be used as the editor area.
   [ : Used after the escape character to specify the command to be executed.
   2 : Parameter to J which says clean the whole page.
   J : Erase in display [http://vt100.net/docs/vt100-ug/chapter3.html#ED]
+  H : Positions the cursor on the screen; takes two parameters that are X and Y separated by ; like <esc>[12;40H
   4 : Number of bytes being written to output.
 */
 void editorRefreshScreen(){
+  // Clears out the screen.
   write(STDOUT_FILENO, "\x1b[2J", 4);
+  // Repositions the cursor at start of screen.
+  write(STDOUT_FILENO, "\x1b[H", 3);
 }
 
 /*** input ***/
@@ -145,6 +150,7 @@ void editorProcessKey(){
   char c = editorReadKey();
   switch (c){
     case CTRL_KEY('q'):
+      editorRefreshScreen();
       exit(0);
       break;
   }
