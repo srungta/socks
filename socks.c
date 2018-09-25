@@ -6,6 +6,13 @@
 #include <termios.h>
 #include <unistd.h>
 
+/*** defines ***/
+/*
+This macro ANDs the key value with 00011111. This is similar to what Ctrl key does
+when pressed before a alphabet. It clears out the first three bits and returns the rest.
+*/
+#define CTRL_KEY(k) ((k) & 0x1f)
+
 /*** data ***/
 // This variable stored the termios state at program init.
 struct termios original_termios;
@@ -137,7 +144,7 @@ int main()
     else {
       printf("%d ('%c') \r\n", c, c);
     }
-    if(c == 'q') break;
+    if(c == CTRL_KEY('q')) break;
   }
 
   return 0;
