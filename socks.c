@@ -118,6 +118,23 @@ char editorReadKey(){
   return c;
 }
 
+
+/*** output ***/
+
+/*
+Method clears out the area in the terminal to be used as the editor area.
+  write : Writes to the output buffer.
+  STDOUT_FILENO : Standard output. In our case th terminal.
+  \x1b : Escape character.
+  [ : Used after the escape character to specify the command to be executed.
+  2 : Parameter to J which says clean the whole page.
+  J : Erase in display [http://vt100.net/docs/vt100-ug/chapter3.html#ED]
+  4 : Number of bytes being written to output.
+*/
+void editorRefreshScreen(){
+  write(STDOUT_FILENO, "\x1b[2J", 4);
+}
+
 /*** input ***/
 
 /*
@@ -155,6 +172,7 @@ int main()
   init();
   while (1)
   {
+    editorRefreshScreen();
     editorProcessKey();
   }
 
