@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sys/ioctl.h>
 #include <termios.h>
 #include <unistd.h>
 
@@ -17,6 +18,8 @@ when pressed before a alphabet. It clears out the first three bits and returns t
 
 // Struct to store editor related information.
 struct editorConfig {
+  int screenRows;
+  int screenColumns;
   // This variable stored the termios state at program init.
   struct termios original_termios;
 };
@@ -123,6 +126,18 @@ char editorReadKey(){
   return c;
 }
 
+int getWindowSize(int *rows, int *columns){
+  struct winsize ws;
+  // ioctl() will place the number of columns wide and the number of rows high
+  // the terminal is into the given winsize struct.
+  if (ioctl(STDOUT_FILENO, TIOCGWINSZ, &ws) == -1 || ws.ws_col == 0) {
+    return -1;
+  } else {
+    *columns = ws.ws_col;
+    *rows = ws.ws_row;
+    return 0;
+  }
+}
 
 /*** output ***/
 
@@ -134,7 +149,7 @@ end of line is encountered.
 This means that column 0 of each row is unavailable for editing.
 */
 void editorDrawRows(){
-  unsigned short int windowSize = 24;
+  unsigned short int windowSize = E.screenRows;
   for (unsigned short i = 0; i < windowSize; i++) {
     write(STDOUT_FILENO, "~\r\n", 3);
   }
@@ -193,6 +208,11 @@ void init(){
 
   // Enable the raw mode.
   enableRawMode();
+
+  // Set windows size
+  if(getWindowSize(&E.screenRows, &E.screenColumns) == -1){
+      die("init - getWindowSize");
+  }
 }
 /*
   Entry point of the program.
