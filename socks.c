@@ -21,7 +21,10 @@ struct termios original_termios;
 
 // Method to handle errors during program execution.
 void die(const char *s){
-  editorRefreshScreen();
+  // Clears out the screen.
+  write(STDOUT_FILENO, "\x1b[2J", 4);
+  // Repositions the cursor at start of screen.
+  write(STDOUT_FILENO, "\x1b[H", 3);
   perror(s);
   exit(1);
 }
@@ -123,6 +126,19 @@ char editorReadKey(){
 /*** output ***/
 
 /*
+Method to put a TILDE ~ sign at the bneginning of each line in th eeditor space.
+This is very close to how vim works.
+Once we start reading contents from files, the TILDEs should come only after the
+end of line is encountered.
+This means that column 0 of each row is unavailable for editing.
+*/
+void editorDrawRows(){
+  unsigned short int windowSize = 24;
+  for (unsigned short i = 0; i < windowSize; i++) {
+    write(STDOUT_FILENO, "~\r\n", 3);
+  }
+}
+/*
 Method clears out the area in the terminal to be used as the editor area.
   write : Writes to the output buffer.
   STDOUT_FILENO : Standard output. In our case th terminal.
@@ -138,6 +154,10 @@ void editorRefreshScreen(){
   write(STDOUT_FILENO, "\x1b[2J", 4);
   // Repositions the cursor at start of screen.
   write(STDOUT_FILENO, "\x1b[H", 3);
+  // SHow tildes on the screen.
+  editorDrawRows();
+  // Repositions the cursor at start of screen.
+  write(STDOUT_FILENO, "\x1b[H", 3);
 }
 
 /*** input ***/
@@ -150,7 +170,10 @@ void editorProcessKey(){
   char c = editorReadKey();
   switch (c){
     case CTRL_KEY('q'):
-      editorRefreshScreen();
+      // Clears out the screen.
+      write(STDOUT_FILENO, "\x1b[2J", 4);
+      // Repositions the cursor at start of screen.
+      write(STDOUT_FILENO, "\x1b[H", 3);
       exit(0);
       break;
   }
