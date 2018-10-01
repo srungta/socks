@@ -14,21 +14,30 @@ when pressed before a alphabet. It clears out the first three bits and returns t
 #define CTRL_KEY(k) ((k) & 0x1f)
 
 /*** data ***/
-// This variable stored the termios state at program init.
-struct termios original_termios;
+
+// Struct to store editor related information.
+struct editorConfig {
+  // This variable stored the termios state at program init.
+  struct termios original_termios;
+};
+
+struct editorConfig E;
 
 /*** terminal ***/
 
 // Method to handle errors during program execution.
 void die(const char *s){
-  editorRefreshScreen();
+  // Clears out the screen.
+  write(STDOUT_FILENO, "\x1b[2J", 4);
+  // Repositions the cursor at start of screen.
+  write(STDOUT_FILENO, "\x1b[H", 3);
   perror(s);
   exit(1);
 }
 
 // Resets the terminal state.
 void disableRawMode(){
-  if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &original_termios) == -1) {
+  if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &E.original_termios) == -1) {
     die("disableRawMode - tcsetattr");
   }
 }
@@ -45,12 +54,7 @@ void disableRawMode(){
 void enableRawMode()
 {
   // Variable to read the current flag status.
-  struct termios raw;
-
-  // Get the current flag status determining terminal behavior.
-  if(tcgetattr(STDIN_FILENO, &raw) == -1){
-      die("enableRawMode - tcgetattr");
-  }
+  struct termios raw = E.original_termios;
 
   /* Disable the parent flag using masks:
       - CS8 : CS8 is not a flag, it is a bit mask with multiple bits,
@@ -123,6 +127,19 @@ char editorReadKey(){
 /*** output ***/
 
 /*
+Method to put a TILDE ~ sign at the bneginning of each line in th eeditor space.
+This is very close to how vim works.
+Once we start reading contents from files, the TILDEs should come only after the
+end of line is encountered.
+This means that column 0 of each row is unavailable for editing.
+*/
+void editorDrawRows(){
+  unsigned short int windowSize = 24;
+  for (unsigned short i = 0; i < windowSize; i++) {
+    write(STDOUT_FILENO, "~\r\n", 3);
+  }
+}
+/*
 Method clears out the area in the terminal to be used as the editor area.
   write : Writes to the output buffer.
   STDOUT_FILENO : Standard output. In our case th terminal.
@@ -138,6 +155,10 @@ void editorRefreshScreen(){
   write(STDOUT_FILENO, "\x1b[2J", 4);
   // Repositions the cursor at start of screen.
   write(STDOUT_FILENO, "\x1b[H", 3);
+  // SHow tildes on the screen.
+  editorDrawRows();
+  // Repositions the cursor at start of screen.
+  write(STDOUT_FILENO, "\x1b[H", 3);
 }
 
 /*** input ***/
@@ -150,7 +171,10 @@ void editorProcessKey(){
   char c = editorReadKey();
   switch (c){
     case CTRL_KEY('q'):
-      editorRefreshScreen();
+      // Clears out the screen.
+      write(STDOUT_FILENO, "\x1b[2J", 4);
+      // Repositions the cursor at start of screen.
+      write(STDOUT_FILENO, "\x1b[H", 3);
       exit(0);
       break;
   }
@@ -162,7 +186,7 @@ void editorProcessKey(){
 */
 void init(){
   // Save the original value in a global variable.
-  tcgetattr(STDIN_FILENO, &original_termios);
+  tcgetattr(STDIN_FILENO, &E.original_termios);
 
   // Disable the raw mode when exiting the program.
   atexit(disableRawMode);
