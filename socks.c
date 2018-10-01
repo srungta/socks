@@ -14,8 +14,14 @@ when pressed before a alphabet. It clears out the first three bits and returns t
 #define CTRL_KEY(k) ((k) & 0x1f)
 
 /*** data ***/
-// This variable stored the termios state at program init.
-struct termios original_termios;
+
+// Struct to store editor related information.
+struct editorConfig {
+  // This variable stored the termios state at program init.
+  struct termios original_termios;
+};
+
+struct editorConfig E;
 
 /*** terminal ***/
 
@@ -31,7 +37,7 @@ void die(const char *s){
 
 // Resets the terminal state.
 void disableRawMode(){
-  if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &original_termios) == -1) {
+  if (tcsetattr(STDIN_FILENO, TCSAFLUSH, &E.original_termios) == -1) {
     die("disableRawMode - tcsetattr");
   }
 }
@@ -48,12 +54,7 @@ void disableRawMode(){
 void enableRawMode()
 {
   // Variable to read the current flag status.
-  struct termios raw;
-
-  // Get the current flag status determining terminal behavior.
-  if(tcgetattr(STDIN_FILENO, &raw) == -1){
-      die("enableRawMode - tcgetattr");
-  }
+  struct termios raw = E.original_termios;
 
   /* Disable the parent flag using masks:
       - CS8 : CS8 is not a flag, it is a bit mask with multiple bits,
@@ -185,7 +186,7 @@ void editorProcessKey(){
 */
 void init(){
   // Save the original value in a global variable.
-  tcgetattr(STDIN_FILENO, &original_termios);
+  tcgetattr(STDIN_FILENO, &E.original_termios);
 
   // Disable the raw mode when exiting the program.
   atexit(disableRawMode);
