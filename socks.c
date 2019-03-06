@@ -126,6 +126,9 @@ char editorReadKey(){
   return c;
 }
 
+/*
+Set the window size in the global context.
+*/
 int getWindowSize(int *rows, int *columns){
   struct winsize ws;
   // ioctl() will place the number of columns wide and the number of rows high
